@@ -19,3 +19,7 @@ func compare[T constraints.Ordered](a, b T) int {
 func Sort[T constraints.Ordered](seq iter.Seq[T], opt ...Option) iter.Seq[T] {
 	return New(compare[T], opt...).Sort(seq)
 }
+
+func SortFunc[T any](seq iter.Seq[T], cmp func(T, T) int, opt ...Option) iter.Seq[T] {
+	return New(cmp, opt...).Sort(seq)
+}

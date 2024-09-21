@@ -37,7 +37,6 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 	defer close(done)
 
 	ch := make(chan *Chunk[T])
-
 	go func() {
 		xs := make([]*Chunk[T], 0, 10)
 		for x := range ch {
