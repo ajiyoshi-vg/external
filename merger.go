@@ -44,34 +44,34 @@ func Merge[T any](a, b iter.Seq[T], cmp func(T, T) int) iter.Seq[T] {
 		nextB, stopB := iter.Pull(b)
 		defer stopB()
 
-		x, okA := nextA()
-		y, okB := nextB()
+		a, okA := nextA()
+		b, okB := nextB()
 		for okA || okB {
 			if !okA {
-				if !yield(y) {
+				if !yield(b) {
 					return
 				}
 				yieldAllNext(nextB, yield)
 				return
 			}
 			if !okB {
-				if !yield(x) {
+				if !yield(a) {
 					return
 				}
 				yieldAllNext(nextA, yield)
 				return
 			}
 
-			if cmp(x, y) < 0 {
-				if !yield(x) {
+			if cmp(a, b) < 0 {
+				if !yield(a) {
 					return
 				}
-				x, okA = nextA()
+				a, okA = nextA()
 			} else {
-				if !yield(y) {
+				if !yield(b) {
 					return
 				}
-				y, okB = nextB()
+				b, okB = nextB()
 			}
 		}
 	}

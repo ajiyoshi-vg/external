@@ -7,6 +7,7 @@ import (
 	"io"
 	"iter"
 	"os"
+	"slices"
 )
 
 type Chunks[T any] struct {
@@ -60,8 +61,11 @@ func (x *Chunk[T]) Store() error {
 	if err != nil {
 		return err
 	}
-	name := tempFile.Name()
-	x.tmpFile = &name
+	defer func() {
+		name := tempFile.Name()
+		x.tmpFile = &name
+		x.data = nil
+	}()
 	return x.store(tempFile)
 }
 
@@ -79,6 +83,9 @@ func (x *Chunk[T]) store(w io.WriteCloser) error {
 }
 
 func (x *Chunk[T]) Restore() (iter.Seq[T], error) {
+	if x.data != nil {
+		return slices.Values(x.data), nil
+	}
 	tempFile, err := os.Open(*x.tmpFile)
 	if err != nil {
 		return nil, err

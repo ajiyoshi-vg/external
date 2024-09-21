@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -39,10 +40,12 @@ func run() error {
 
 func sort(r io.Reader) error {
 	i := 0
+	out := bufio.NewWriter(os.Stdout)
+	defer out.Flush()
 	for x := range external.SortString(external.Lines(r)) {
-		fmt.Println(x)
+		fmt.Fprintln(out, x)
 		i++
-		if i%1000000 == 0 {
+		if i%(1*1000*1000) == 0 {
 			log.Println(i)
 		}
 	}

@@ -21,7 +21,7 @@ func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
 	ret := &Sorter[T]{
 		cmp: cmp,
 		opt: option{
-			chunkSize: 1000 * 1000 * 10,
+			chunkSize: 1000 * 1000 * 3,
 		},
 	}
 
@@ -56,9 +56,12 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 
 			s.sort(data)
 			chunk := NewChunk(data)
-			if err := chunk.Store(); err != nil {
-				log.Println(err)
-				return
+			if len(data) == s.opt.chunkSize {
+				err := chunk.Store()
+				if err != nil {
+					log.Println(err)
+					return
+				}
 			}
 			ch <- chunk
 		}(buf)
