@@ -2,7 +2,6 @@ package external
 
 import (
 	"iter"
-	"log"
 
 	"github.com/ajiyoshi-vg/external/emit"
 )
@@ -38,9 +37,6 @@ func (m *Merger[T]) Merge(xs []iter.Seq[T]) iter.Seq[T] {
 
 func Merge[T any](a, b iter.Seq[T], cmp func(T, T) int) iter.Seq[T] {
 	return func(yield func(T) bool) {
-		log.Println("merge start")
-		defer log.Println("merge end")
-
 		nextA, stopA := iter.Pull(a)
 		defer stopA()
 		nextB, stopB := iter.Pull(b)

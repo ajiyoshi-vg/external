@@ -1,8 +1,8 @@
 package external
 
 import (
+	"errors"
 	"iter"
-	"log"
 	"sort"
 	"sync"
 
@@ -13,6 +13,7 @@ import (
 type Sorter[T any] struct {
 	cmp func(T, T) int
 	opt option
+	err error
 }
 
 func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
@@ -39,7 +40,6 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 	go func() {
 		xs := make([]*Chunk[T], 0, 10)
 		for x := range ch {
-			log.Println("got a chunk")
 			xs = append(xs, x)
 		}
 		done <- NewChunks(xs)
@@ -50,14 +50,13 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 		wg.Add(1)
 		go func(data []T) {
 			defer wg.Done()
-			defer log.Println("store chunk end")
 
 			s.sort(data)
 			chunk := NewChunk(data)
 			if len(data) == s.opt.chunkSize {
 				err := chunk.Store()
 				if err != nil {
-					log.Println(err)
+					s.err = errors.Join(s.err, err)
 					return
 				}
 			}
@@ -75,14 +74,14 @@ func (s *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		defer func() {
 			if err := runs.Clean(); err != nil {
-				log.Println(err)
+				s.err = errors.Join(s.err, err)
 			}
 		}()
 
 		m := NewMerger(s.cmp, runs)
 		merged, err := m.Merged()
 		if err != nil {
-			log.Println(err)
+			s.err = errors.Join(s.err, err)
 			return
 		}
 
@@ -90,9 +89,11 @@ func (s *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
+func (s *Sorter[T]) Err() error {
+	return s.err
+}
+
 func (s *Sorter[T]) sort(data []T) []T {
-	log.Println("sort chunk start")
-	defer log.Println("sort chunk end")
 	sort.Slice(data, func(i, j int) bool {
 		return s.cmp(data[i], data[j]) < 0
 	})
