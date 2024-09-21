@@ -6,7 +6,7 @@ import (
 	"iter"
 )
 
-func Buffer[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
+func Chunk[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
 	return func(yield func([]T) bool) {
 		buf := make([]T, 0, size)
 		for x := range seq {
@@ -41,6 +41,20 @@ func ByteLines(r io.Reader) iter.Seq[[]byte] {
 		for s.Scan() {
 			if !yield(s.Bytes()) {
 				return
+			}
+		}
+	}
+}
+
+func Uniq[T comparable](sorted iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		var last T
+		for x := range sorted {
+			if x != last {
+				if !yield(x) {
+					return
+				}
+				last = x
 			}
 		}
 	}

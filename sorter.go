@@ -4,7 +4,6 @@ import (
 	"iter"
 	"log"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/ajiyoshi-vg/external/emit"
@@ -14,10 +13,6 @@ import (
 type Sorter[T any] struct {
 	cmp func(T, T) int
 	opt option
-}
-
-func SortString(seq iter.Seq[string], opt ...Option) iter.Seq[string] {
-	return New(strings.Compare, opt...).Sort(seq)
 }
 
 func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
@@ -51,7 +46,7 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 	}()
 
 	wg := sync.WaitGroup{}
-	for buf := range scan.Buffer(seq, s.opt.chunkSize) {
+	for buf := range scan.Chunk(seq, s.opt.chunkSize) {
 		wg.Add(1)
 		go func(data []T) {
 			defer wg.Done()

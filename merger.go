@@ -53,14 +53,14 @@ func Merge[T any](a, b iter.Seq[T], cmp func(T, T) int) iter.Seq[T] {
 				if !yield(b) {
 					return
 				}
-				emit.After(nextB, yield)
+				emit.Pull(nextB, yield)
 				return
 			}
 			if !okB {
 				if !yield(a) {
 					return
 				}
-				emit.After(nextA, yield)
+				emit.Pull(nextA, yield)
 				return
 			}
 
