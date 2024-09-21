@@ -8,52 +8,46 @@ import (
 	"os"
 )
 
-type run[T any] struct {
+type Chunk[T any] struct {
 	data    []T
 	tmpFile *string
 }
 
-func NewRun[T any](data []T) *run[T] {
-	return &run[T]{data: data}
+func NewChunk[T any](data []T) *Chunk[T] {
+	return &Chunk[T]{data: data}
 }
 
-func (x *run[T]) Clean() error {
+func (x *Chunk[T]) Clean() error {
 	if x.tmpFile != nil {
 		return os.Remove(*x.tmpFile)
 	}
 	return nil
 }
 
-func (x *run[T]) Store() error {
+func (x *Chunk[T]) Store() error {
 	tempFile, err := os.CreateTemp("", "run")
 	if err != nil {
 		return err
 	}
-	defer tempFile.Close()
 	name := tempFile.Name()
 	x.tmpFile = &name
 	return x.store(tempFile)
 }
 
-func (x *run[T]) store(w io.Writer) error {
-	bf := bufio.NewWriter(w)
-	defer bf.Flush()
+func (x *Chunk[T]) store(w io.WriteCloser) error {
+	defer w.Close()
+	buf := bufio.NewWriter(w)
+	defer buf.Flush()
+	enc := json.NewEncoder(buf)
 	for _, v := range x.data {
-		buf, err := json.Marshal(v)
-		if err != nil {
-			return err
-		}
-		if _, err := bf.Write(buf); err != nil {
-			return err
-		}
-		if _, err := bf.WriteRune('\n'); err != nil {
+		if err := enc.Encode(v); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (x *run[T]) Restore() (iter.Seq[T], error) {
+func (x *Chunk[T]) Restore() (iter.Seq[T], error) {
 	tempFile, err := os.Open(*x.tmpFile)
 	if err != nil {
 		return nil, err
@@ -61,11 +55,13 @@ func (x *run[T]) Restore() (iter.Seq[T], error) {
 	return x.restore(tempFile), nil
 }
 
-func (x *run[T]) restore(r io.Reader) iter.Seq[T] {
+func (x *Chunk[T]) restore(r io.ReadCloser) iter.Seq[T] {
+	dec := json.NewDecoder(bufio.NewReader(r))
 	return func(yield func(T) bool) {
-		for line := range Lines(r) {
+		defer r.Close()
+		for dec.More() {
 			var v T
-			if err := json.Unmarshal([]byte(line), &v); err != nil {
+			if err := dec.Decode(&v); err != nil {
 				return
 			}
 			if !yield(v) {
