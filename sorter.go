@@ -11,9 +11,10 @@ import (
 )
 
 type Sorter[T any] struct {
-	cmp func(T, T) int
-	opt option
-	err error
+	cmp  func(T, T) int
+	opt  option
+	err  error
+	lock sync.Mutex
 }
 
 func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
@@ -45,6 +46,13 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 		done <- NewChunks(xs)
 	}()
 
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			s.catch(err)
+		}
+	}()
+
 	wg := sync.WaitGroup{}
 	for buf := range scan.Chunk(seq, s.opt.chunkSize) {
 		wg.Add(1)
@@ -56,7 +64,7 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 			if len(data) == s.opt.chunkSize {
 				err := chunk.Store()
 				if err != nil {
-					s.err = errors.Join(s.err, err)
+					errs <- err
 					return
 				}
 			}
@@ -65,6 +73,7 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 	}
 	wg.Wait()
 	close(ch)
+	close(errs)
 
 	return <-done
 }
@@ -74,14 +83,14 @@ func (s *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		defer func() {
 			if err := runs.Clean(); err != nil {
-				s.err = errors.Join(s.err, err)
+				s.catch(err)
 			}
 		}()
 
 		m := NewMerger(s.cmp, runs)
 		merged, err := m.Merged()
 		if err != nil {
-			s.err = errors.Join(s.err, err)
+			s.catch(err)
 			return
 		}
 
@@ -90,7 +99,15 @@ func (s *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 }
 
 func (s *Sorter[T]) Err() error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	return s.err
+}
+
+func (s *Sorter[T]) catch(err error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.err = errors.Join(s.err, err)
 }
 
 func (s *Sorter[T]) sort(data []T) []T {
