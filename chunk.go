@@ -3,10 +3,41 @@ package external
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
 	"iter"
 	"os"
 )
+
+type Chunks[T any] struct {
+	chunk []*Chunk[T]
+}
+
+func NewChunks[T any](chunk []*Chunk[T]) *Chunks[T] {
+	return &Chunks[T]{chunk: chunk}
+}
+
+func (x *Chunks[T]) Iters() ([]iter.Seq[T], error) {
+	ret := make([]iter.Seq[T], 0, len(x.chunk))
+	for _, c := range x.chunk {
+		iter, err := c.Restore()
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, iter)
+	}
+	return ret, nil
+}
+
+func (x *Chunks[T]) Clean() error {
+	var ret error
+	for _, c := range x.chunk {
+		if err := c.Clean(); err != nil {
+			ret = errors.Join(ret, err)
+		}
+	}
+	return ret
+}
 
 type Chunk[T any] struct {
 	data    []T

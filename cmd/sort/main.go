@@ -38,8 +38,13 @@ func run() error {
 }
 
 func sort(r io.Reader) error {
+	i := 0
 	for x := range external.SortString(external.Lines(r)) {
 		fmt.Println(x)
+		i++
+		if i%1000000 == 0 {
+			log.Println(i)
+		}
 	}
 	return nil
 }

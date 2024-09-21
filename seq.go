@@ -14,13 +14,12 @@ func yieldAllNext[T any](next func() (T, bool), yield func(T) bool) {
 	}
 }
 
-/*
-	func yieldAll[T any](seq iter.Seq[T], yield func(T) bool) {
-		next, stop := iter.Pull(seq)
-		defer stop()
-		yieldAllNext(next, yield)
-	}
-*/
+func yieldAll[T any](seq iter.Seq[T], yield func(T) bool) {
+	next, stop := iter.Pull(seq)
+	defer stop()
+	yieldAllNext(next, yield)
+}
+
 func Buffer[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
 	return func(yield func([]T) bool) {
 		buf := make([]T, 0, size)
