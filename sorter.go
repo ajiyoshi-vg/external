@@ -6,6 +6,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/ajiyoshi-vg/external/emit"
+	"github.com/ajiyoshi-vg/external/scan"
 )
 
 type Sorter[T any] struct {
@@ -48,7 +51,7 @@ func (s *Sorter[T]) Split(seq iter.Seq[T]) *Chunks[T] {
 	}()
 
 	wg := sync.WaitGroup{}
-	for buf := range Buffer(seq, s.opt.chunkSize) {
+	for buf := range scan.Buffer(seq, s.opt.chunkSize) {
 		wg.Add(1)
 		go func(data []T) {
 			defer wg.Done()
@@ -88,7 +91,7 @@ func (s *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 			return
 		}
 
-		yieldAll(merged, yield)
+		emit.All(merged, yield)
 	}
 }
 

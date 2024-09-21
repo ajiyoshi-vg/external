@@ -3,6 +3,8 @@ package external
 import (
 	"iter"
 	"log"
+
+	"github.com/ajiyoshi-vg/external/emit"
 )
 
 type Merger[T any] struct {
@@ -51,14 +53,14 @@ func Merge[T any](a, b iter.Seq[T], cmp func(T, T) int) iter.Seq[T] {
 				if !yield(b) {
 					return
 				}
-				yieldAllNext(nextB, yield)
+				emit.After(nextB, yield)
 				return
 			}
 			if !okB {
 				if !yield(a) {
 					return
 				}
-				yieldAllNext(nextA, yield)
+				emit.After(nextA, yield)
 				return
 			}
 

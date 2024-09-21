@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/ajiyoshi-vg/external"
+	"github.com/ajiyoshi-vg/external/scan"
 )
 
 var opt struct {
@@ -42,7 +43,7 @@ func sort(r io.Reader) error {
 	i := 0
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
-	for x := range external.SortString(external.Lines(r)) {
+	for x := range external.SortString(scan.Lines(r)) {
 		fmt.Fprintln(out, x)
 		i++
 		if i%(1*1000*1000) == 0 {

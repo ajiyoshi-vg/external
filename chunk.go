@@ -61,16 +61,17 @@ func (x *Chunk[T]) Store() error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		name := tempFile.Name()
-		x.tmpFile = &name
-		x.data = nil
-	}()
-	return x.store(tempFile)
+	if err := x.store(tempFile); err != nil {
+		return err
+	}
+	tempFile.Close()
+	name := tempFile.Name()
+	x.tmpFile = &name
+	x.data = nil
+	return nil
 }
 
 func (x *Chunk[T]) store(w io.WriteCloser) error {
-	defer w.Close()
 	buf := bufio.NewWriter(w)
 	defer buf.Flush()
 	enc := json.NewEncoder(buf)
