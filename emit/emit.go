@@ -1,0 +1,19 @@
+package emit
+
+import "iter"
+
+func All[T any](seq iter.Seq[T], yield func(T) bool) {
+	for x := range seq {
+		if !yield(x) {
+			return
+		}
+	}
+}
+
+func Pull[T any](next func() (T, bool), yield func(T) bool) {
+	for x, ok := next(); ok; x, ok = next() {
+		if !yield(x) {
+			return
+		}
+	}
+}
