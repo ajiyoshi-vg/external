@@ -18,6 +18,14 @@ func NewChunks[T any](chunk []*Chunk[T]) *Chunks[T] {
 	return &Chunks[T]{chunk: chunk}
 }
 
+func (x *Chunks[T]) Length() int {
+	ret := 0
+	for _, c := range x.chunk {
+		ret += c.Length()
+	}
+	return ret
+}
+
 func (x *Chunks[T]) Iters() ([]iter.Seq[T], error) {
 	ret := make([]iter.Seq[T], 0, len(x.chunk))
 	for _, c := range x.chunk {
@@ -43,10 +51,18 @@ func (x *Chunks[T]) Clean() error {
 type Chunk[T any] struct {
 	data    []T
 	tmpFile *string
+	length  int
 }
 
 func NewChunk[T any](data []T) *Chunk[T] {
-	return &Chunk[T]{data: data}
+	return &Chunk[T]{
+		data:   data,
+		length: len(data),
+	}
+}
+
+func (x *Chunk[T]) Length() int {
+	return x.length
 }
 
 func (x *Chunk[T]) Clean() error {
@@ -61,10 +77,10 @@ func (x *Chunk[T]) Store() error {
 	if err != nil {
 		return err
 	}
+	defer tempFile.Close()
 	if err := x.store(tempFile); err != nil {
-		return err
+		return errors.Join(err, os.Remove(tempFile.Name()))
 	}
-	tempFile.Close()
 	name := tempFile.Name()
 	x.tmpFile = &name
 	x.data = nil

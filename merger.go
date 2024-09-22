@@ -7,20 +7,11 @@ import (
 )
 
 type Merger[T any] struct {
-	cmp    func(T, T) int
-	chunks *Chunks[T]
+	cmp func(T, T) int
 }
 
-func NewMerger[T any](cmp func(T, T) int, chunks *Chunks[T]) *Merger[T] {
-	return &Merger[T]{cmp: cmp, chunks: chunks}
-}
-
-func (m *Merger[T]) Merged() (iter.Seq[T], error) {
-	iters, err := m.chunks.Iters()
-	if err != nil {
-		return nil, err
-	}
-	return m.Merge(iters), nil
+func NewMerger[T any](cmp func(T, T) int) *Merger[T] {
+	return &Merger[T]{cmp: cmp}
 }
 
 func (m *Merger[T]) Merge(xs []iter.Seq[T]) iter.Seq[T] {

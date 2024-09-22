@@ -1,6 +1,7 @@
 package external
 
 import (
+	"bytes"
 	"slices"
 	"strings"
 	"testing"
@@ -90,6 +91,37 @@ func TestSortFunc(t *testing.T) {
 		t.Run(title, func(t *testing.T) {
 			actual := SortFunc(slices.Values(c.input), c.copmpare, ChunkSize(1))
 			assert.Equal(t, c.expect, slices.Collect(actual))
+		})
+	}
+}
+
+func TestBytes(t *testing.T) {
+	cases := map[string]struct {
+		input  [][]byte
+		expect [][]byte
+		sort   *Sorter[[]byte]
+	}{
+		"sort bytes": {
+			input: [][]byte{
+				[]byte("c"),
+				[]byte("a"),
+				{0, 1, 2},
+				[]byte("a\nc"),
+			},
+			expect: [][]byte{
+				{0, 1, 2},
+				[]byte("a"),
+				[]byte("a\nc"),
+				[]byte("c"),
+			},
+			sort: New(bytes.Compare, ChunkSize(1)),
+		},
+	}
+
+	for title, c := range cases {
+		t.Run(title, func(t *testing.T) {
+			actual := slices.Collect(c.sort.Sort(slices.Values(c.input)))
+			assert.Equal(t, c.expect, actual)
 		})
 	}
 }
