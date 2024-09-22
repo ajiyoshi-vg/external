@@ -24,28 +24,27 @@ func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
 
 func (x *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 	x.err = nil
+	s := NewSplitter(x.cmp, x.opt...)
+	m := NewMerger(x.cmp)
+
+	chunks, err := s.Split(seq)
+	if err != nil {
+		x.catch(err)
+		return nil
+	}
+
+	cs, err := chunks.Iters()
+	if err != nil {
+		x.catch(err)
+		return nil
+	}
+
 	return func(yield func(T) bool) {
-
-		s := NewSplitter(x.cmp, x.opt...)
-		chunks, err := s.Split(seq)
-		if err != nil {
-			x.catch(err)
-			return
-		}
-
 		defer func() {
 			x.catch(chunks.Clean())
 		}()
 
-		cs, err := chunks.Iters()
-		if err != nil {
-			x.catch(err)
-			return
-		}
-
-		merged := NewMerger(x.cmp).Merge(cs)
-
-		emit.All(merged, yield)
+		emit.All(m.Merge(cs), yield)
 	}
 }
 

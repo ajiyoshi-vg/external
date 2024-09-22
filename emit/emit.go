@@ -17,3 +17,10 @@ func Pull[T any](next func() (T, bool), yield func(T) bool) {
 		}
 	}
 }
+
+func Then[T any](seq iter.Seq[T], f func()) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		defer f()
+		All(seq, yield)
+	}
+}
