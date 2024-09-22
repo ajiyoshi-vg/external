@@ -78,10 +78,10 @@ func (x *Chunk[T]) Store() error {
 		return err
 	}
 	defer tempFile.Close()
-	if err := x.store(tempFile); err != nil {
-		return errors.Join(err, os.Remove(tempFile.Name()))
-	}
 	name := tempFile.Name()
+	if err := x.store(tempFile); err != nil {
+		return errors.Join(err, os.Remove(name))
+	}
 	x.tmpFile = &name
 	x.data = nil
 	return nil
