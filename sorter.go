@@ -32,12 +32,7 @@ func (x *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 			x.catch(err)
 			return
 		}
-
-		defer func() {
-			if err := chunks.Clean(); err != nil {
-				x.catch(err)
-			}
-		}()
+		defer x.catch(chunks.Clean())
 
 		cs, err := chunks.Iters()
 		if err != nil {
