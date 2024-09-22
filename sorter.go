@@ -23,8 +23,8 @@ func New[T any](cmp func(T, T) int, opt ...Option) *Sorter[T] {
 }
 
 func (x *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
+	x.err = nil
 	return func(yield func(T) bool) {
-		x.err = nil
 
 		s := NewSplitter(x.cmp, x.opt...)
 		chunks, err := s.Split(seq)
