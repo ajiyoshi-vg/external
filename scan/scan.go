@@ -39,7 +39,9 @@ func ByteLines(r io.Reader) iter.Seq[[]byte] {
 	s := bufio.NewScanner(r)
 	return func(yield func([]byte) bool) {
 		for s.Scan() {
-			if !yield(s.Bytes()) {
+			buf := make([]byte, len(s.Bytes()))
+			copy(buf, s.Bytes())
+			if !yield(buf) {
 				return
 			}
 		}
