@@ -23,3 +23,5 @@ func Sort[T constraints.Ordered](seq iter.Seq[T], opt ...Option) iter.Seq[T] {
 func SortFunc[T any](seq iter.Seq[T], cmp func(T, T) int, opt ...Option) iter.Seq[T] {
 	return New(cmp, opt...).Sort(seq)
 }
+
+func nop[T any](func(T) bool) {}

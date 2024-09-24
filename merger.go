@@ -16,7 +16,7 @@ func NewMerger[T any](cmp func(T, T) int) *Merger[T] {
 
 func (m *Merger[T]) Merge(xs []iter.Seq[T]) iter.Seq[T] {
 	if len(xs) == 0 {
-		return func(yield func(T) bool) {}
+		return nop
 	}
 	if len(xs) == 1 {
 		return xs[0]

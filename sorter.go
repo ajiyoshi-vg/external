@@ -30,13 +30,13 @@ func (x *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 	chunks, err := s.Split(seq)
 	if err != nil {
 		x.catch(err)
-		return nil
+		return nop
 	}
 
 	cs, err := chunks.Iters()
 	if err != nil {
 		x.catch(err)
-		return nil
+		return nop
 	}
 
 	return func(yield func(T) bool) {
