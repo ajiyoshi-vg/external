@@ -65,21 +65,23 @@ func Uniq[T comparable](sorted iter.Seq[T]) iter.Seq[T] {
 }
 
 func Prove[T any](name string, seq iter.Seq[T]) iter.Seq[T] {
+	start := time.Now()
 	return func(yield func(T) bool) {
 		last := time.Now()
-		var total time.Duration
+		var sum time.Duration
 		i := 0
 
 		defer func() {
 			slog.Info("prove",
 				"name", name,
-				"total", total,
-				"average", ave(total, i),
+				"total", time.Since(start),
+				"sum", sum,
+				"average", ave(sum, i),
 				"count", i)
 		}()
 
 		for x := range seq {
-			total += time.Since(last)
+			sum += time.Since(last)
 			last = time.Now()
 			i++
 			if !yield(x) {
