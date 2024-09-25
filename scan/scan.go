@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"io"
 	"iter"
+	"log/slog"
+	"time"
 )
 
 func Chunk[T any](seq iter.Seq[T], size int) iter.Seq[[]T] {
@@ -60,4 +62,36 @@ func Uniq[T comparable](sorted iter.Seq[T]) iter.Seq[T] {
 			}
 		}
 	}
+}
+
+func Prove[T any](name string, seq iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		last := time.Now()
+		var total time.Duration
+		i := 0
+
+		defer func() {
+			slog.Info("prove",
+				"name", name,
+				"total", total,
+				"average", ave(total, i),
+				"count", i)
+		}()
+
+		for x := range seq {
+			total += time.Since(last)
+			last = time.Now()
+			i++
+			if !yield(x) {
+				return
+			}
+		}
+	}
+}
+
+func ave(total time.Duration, count int) time.Duration {
+	if count == 0 {
+		return 0
+	}
+	return total / time.Duration(count)
 }

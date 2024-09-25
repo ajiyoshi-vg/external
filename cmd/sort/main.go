@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"iter"
 	"log"
 	"os"
 
@@ -13,11 +14,13 @@ import (
 )
 
 var opt struct {
-	in string
+	in      string
+	verbose bool
 }
 
 func init() {
 	flag.StringVar(&opt.in, "in", "", "input file(empty: stdin)")
+	flag.BoolVar(&opt.verbose, "v", false, "verbose")
 	flag.Parse()
 }
 
@@ -43,12 +46,20 @@ func sort(r io.Reader) error {
 	i := 0
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
-	for x := range external.Sort(scan.Lines(r)) {
+	for x := range sortedLines(r) {
 		fmt.Fprintln(out, x)
 		i++
-		if i%(1*1000*1000) == 0 {
+		if opt.verbose && i%(1*1000*1000) == 0 {
 			log.Println(i)
 		}
 	}
 	return nil
+}
+
+func sortedLines(r io.Reader) iter.Seq[string] {
+	sorted := external.Sort(scan.Lines(r))
+	if opt.verbose {
+		return scan.Prove("sort", sorted)
+	}
+	return sorted
 }
