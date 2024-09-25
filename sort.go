@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-func compare[T constraints.Ordered](a, b T) int {
+func Compare[T constraints.Ordered](a, b T) int {
 	if a < b {
 		return -1
 	}
@@ -17,7 +17,7 @@ func compare[T constraints.Ordered](a, b T) int {
 }
 
 func Sort[T constraints.Ordered](seq iter.Seq[T], opt ...Option) iter.Seq[T] {
-	return New(compare[T], opt...).Sort(seq)
+	return New(Compare[T], opt...).Sort(seq)
 }
 
 func SortFunc[T any](seq iter.Seq[T], cmp func(T, T) int, opt ...Option) iter.Seq[T] {

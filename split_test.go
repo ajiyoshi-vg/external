@@ -16,12 +16,12 @@ func TestSplit(t *testing.T) {
 		"split int": {
 			input:  []int{3, 1, 2},
 			expect: 3,
-			split:  NewSplitter(compare[int]),
+			split:  NewSplitter(Compare[int]),
 		},
 		"split int(chunked)": {
 			input:  []int{3, 1, 2},
 			expect: 3,
-			split:  NewSplitter(compare[int], ChunkSize(2)),
+			split:  NewSplitter(Compare[int], ChunkSize(2)),
 		},
 	}
 
