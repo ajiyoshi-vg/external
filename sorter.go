@@ -44,7 +44,7 @@ func (x *Sorter[T]) Sort(seq iter.Seq[T]) iter.Seq[T] {
 			x.catch(chunks.Clean())
 		}()
 
-		emit.All(m.Merge(cs), yield)
+		emit.Buffered(m.Merge(cs), yield)
 	}
 }
 

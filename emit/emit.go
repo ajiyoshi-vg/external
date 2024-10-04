@@ -24,3 +24,13 @@ func Then[T any](seq iter.Seq[T], f func()) iter.Seq[T] {
 		All(seq, yield)
 	}
 }
+
+func Each[T any](seq iter.Seq[[]T], yield func(T) bool) {
+	for buf := range seq {
+		for _, v := range buf {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
