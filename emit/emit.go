@@ -26,9 +26,19 @@ func Then[T any](seq iter.Seq[T], f func()) iter.Seq[T] {
 }
 
 func Each[T any](seq iter.Seq[[]T], yield func(T) bool) {
-	for buf := range seq {
-		for _, v := range buf {
-			if !yield(v) {
+	for xs := range seq {
+		for _, x := range xs {
+			if !yield(x) {
+				return
+			}
+		}
+	}
+}
+
+func Chan[T any](ch <-chan T) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for x := range ch {
+			if !yield(x) {
 				return
 			}
 		}

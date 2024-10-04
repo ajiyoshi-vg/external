@@ -37,11 +37,5 @@ func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOp
 		}
 		close(ch)
 	}()
-	for xs := range ch {
-		for _, x := range xs {
-			if !yield(x) {
-				return
-			}
-		}
-	}
+	Each(Chan(ch), yield)
 }
