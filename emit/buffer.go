@@ -23,12 +23,12 @@ func ChunkSize(n int) func(*bufferOption) {
 }
 
 func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOption)) {
-	opt := bufferOption{
+	opt := &bufferOption{
 		chunkSize:  1000,
 		bufferSize: 5 * 1000,
 	}
 	for _, f := range opts {
-		f(&opt)
+		f(opt)
 	}
 	ch := make(chan []T, opt.bufferSize)
 	go func() {

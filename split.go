@@ -3,6 +3,7 @@ package external
 import (
 	"errors"
 	"iter"
+	"runtime"
 	"sort"
 
 	"github.com/ajiyoshi-vg/external/scan"
@@ -19,6 +20,7 @@ func NewSplitter[T any](cmp func(T, T) int, opt ...Option) *Splitter[T] {
 		cmp: cmp,
 		opt: option{
 			chunkSize: 1000 * 1000 * 3,
+			limit:     runtime.NumCPU(),
 		},
 	}
 
@@ -43,6 +45,7 @@ func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
 	}()
 
 	g := errgroup.Group{}
+	g.SetLimit(s.opt.limit)
 	for data := range scan.Chunk(seq, s.opt.chunkSize) {
 		g.Go(func() error {
 			chunk, err := s.chunk(data)
