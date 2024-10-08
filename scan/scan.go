@@ -91,6 +91,18 @@ func Prove[T any](name string, seq iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
+func WithIndex[T any](seq iter.Seq[T]) iter.Seq2[int, T] {
+	return func(yield func(int, T) bool) {
+		i := 0
+		for x := range seq {
+			if !yield(i, x) {
+				return
+			}
+			i++
+		}
+	}
+}
+
 func ave(total time.Duration, count int) time.Duration {
 	if count == 0 {
 		return 0

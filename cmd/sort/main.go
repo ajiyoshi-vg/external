@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"iter"
 	"log"
 	"os"
 
@@ -43,23 +42,13 @@ func run() error {
 }
 
 func sort(r io.Reader) error {
-	i := 0
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
-	for x := range sortedLines(r) {
+	for i, x := range scan.WithIndex(external.Sort(scan.Lines(r))) {
 		fmt.Fprintln(out, x)
-		i++
 		if opt.verbose && i%(1*1000*1000) == 0 {
 			log.Println(i)
 		}
 	}
 	return nil
-}
-
-func sortedLines(r io.Reader) iter.Seq[string] {
-	sorted := external.Sort(scan.Lines(r))
-	if opt.verbose {
-		return scan.Prove("sort", sorted)
-	}
-	return sorted
 }
