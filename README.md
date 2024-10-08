@@ -13,8 +13,8 @@ import (
 func sort(r io.Reader) error {
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
-    // Sort scanned strings line by line
-    // Write sorted lines to standard output
+	// Sort scanned strings line by line
+	// Write sorted lines to standard output
 	for x := range external.Sort(scan.Lines(r)) {
 		fmt.Fprintln(out, x)
 	}
