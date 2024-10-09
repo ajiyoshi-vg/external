@@ -32,10 +32,10 @@ func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOp
 	}
 	ch := make(chan []T, opt.bufferSize)
 	go func() {
+		defer close(ch)
 		for xs := range scan.Chunk(seq, opt.chunkSize) {
 			ch <- xs
 		}
-		close(ch)
 	}()
 	Each(Chan(ch), yield)
 }

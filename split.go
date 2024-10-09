@@ -32,17 +32,8 @@ func NewSplitter[T any](cmp func(T, T) int, opt ...Option) *Splitter[T] {
 }
 
 func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
-	done := make(chan *Chunks[T])
-	defer close(done)
-
 	ch := make(chan *Chunk[T])
-	go func() {
-		xs := make([]*Chunk[T], 0, 10)
-		for x := range ch {
-			xs = append(xs, x)
-		}
-		done <- NewChunks(xs)
-	}()
+	done := collectSlice(ch)
 
 	g := errgroup.Group{}
 	g.SetLimit(s.opt.limit)
@@ -59,11 +50,24 @@ func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
 	err := g.Wait()
 	close(ch)
 
-	ret := <-done
+	ret := NewChunks(<-done)
 	if err != nil {
 		return nil, errors.Join(err, ret.Clean())
 	}
 	return ret, nil
+}
+
+func collectSlice[T any](ch <-chan T) <-chan []T {
+	done := make(chan []T)
+	go func() {
+		defer close(done)
+		xs := make([]T, 0, 10)
+		for x := range ch {
+			xs = append(xs, x)
+		}
+		done <- xs
+	}()
+	return done
 }
 
 func (s *Splitter[T]) chunk(data []T) (*Chunk[T], error) {
