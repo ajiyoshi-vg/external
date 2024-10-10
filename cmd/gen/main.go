@@ -12,11 +12,11 @@ import (
 )
 
 var opt struct {
-	num int
+	num int64
 }
 
 func init() {
-	flag.IntVar(&opt.num, "n", 1000*1000, "number")
+	flag.Int64Var(&opt.num, "n", 1000*1000, "number")
 	flag.Parse()
 }
 
@@ -27,12 +27,12 @@ func main() {
 }
 
 func run() error {
-	p := progressbar.Default(int64(opt.num))
+	p := progressbar.Default(opt.num)
 	w := bufio.NewWriter(os.Stdout)
 	defer w.Flush()
+
 	for range opt.num {
-		x := uuid.New()
-		fmt.Println(x.String())
+		fmt.Fprintln(w, uuid.New().String())
 		_ = p.Add(1)
 	}
 	return nil

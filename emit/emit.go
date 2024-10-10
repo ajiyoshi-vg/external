@@ -35,12 +35,13 @@ func Flatten[T any](seq iter.Seq[[]T], yield func(T) bool) {
 	}
 }
 
-func Chan[T any](ch <-chan T) iter.Seq[T] {
-	return func(yield func(T) bool) {
-		for x := range ch {
-			if !yield(x) {
-				return
-			}
+func Chan[T any](seq iter.Seq[T]) <-chan T {
+	ret := make(chan T)
+	go func() {
+		defer close(ret)
+		for x := range seq {
+			ret <- x
 		}
-	}
+	}()
+	return ret
 }

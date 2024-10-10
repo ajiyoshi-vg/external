@@ -25,7 +25,7 @@ func ChunkSize(n int) func(*bufferOption) {
 func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOption)) {
 	opt := &bufferOption{
 		chunkSize:  1000,
-		bufferSize: 5 * 1000,
+		bufferSize: 100,
 	}
 	for _, f := range opts {
 		f(opt)
@@ -37,5 +37,5 @@ func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOp
 			ch <- xs
 		}
 	}()
-	Flatten(Chan(ch), yield)
+	Flatten(scan.Chan(ch), yield)
 }

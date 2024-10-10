@@ -41,11 +41,14 @@ func run() error {
 func sorted(r io.Reader) error {
 	br := bufio.NewReader(r)
 	prev := ""
+	n := 0
 	for line := range scan.Lines(br) {
 		if prev > line {
 			return fmt.Errorf("not sorted: [%s] > [%s]", prev, line)
 		}
 		prev = line
+		n++
 	}
+	fmt.Fprintf(os.Stderr, "%d lines sorted\n", n)
 	return nil
 }

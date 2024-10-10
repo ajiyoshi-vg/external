@@ -4,6 +4,7 @@ import (
 	"iter"
 
 	"github.com/ajiyoshi-vg/external/emit"
+	"github.com/ajiyoshi-vg/external/scan"
 )
 
 type Merger[T any] struct {
@@ -15,53 +16,65 @@ func NewMerger[T any](cmp func(T, T) int) *Merger[T] {
 }
 
 func (m *Merger[T]) Merge(xs []iter.Seq[T]) iter.Seq[T] {
+	return scan.Chan(m.merge(xs))
+}
+
+func (m *Merger[T]) merge(xs []iter.Seq[T]) <-chan T {
 	if len(xs) == 0 {
-		return nop
+		return nil
 	}
 	if len(xs) == 1 {
-		return xs[0]
+		return emit.Chan(xs[0])
 	}
-	a := m.Merge(xs[:len(xs)/2])
-	b := m.Merge(xs[len(xs)/2:])
+	a := m.merge(xs[:len(xs)/2])
+	b := m.merge(xs[len(xs)/2:])
 	return Merge(a, b, m.cmp)
 }
 
-func Merge[T any](a, b iter.Seq[T], cmp func(T, T) int) iter.Seq[T] {
-	return func(yield func(T) bool) {
-		nextA, stopA := iter.Pull(a)
-		defer stopA()
-		nextB, stopB := iter.Pull(b)
-		defer stopB()
+func Merge[T any](a, b <-chan T, cmp func(T, T) int) <-chan T {
+	ret := make(chan T, 100)
 
-		a, okA := nextA()
-		b, okB := nextB()
-		for okA || okB {
-			if !okA {
-				if !yield(b) {
-					return
-				}
-				emit.Pull(nextB, yield)
-				return
-			}
-			if !okB {
-				if !yield(a) {
-					return
-				}
-				emit.Pull(nextA, yield)
-				return
-			}
+	yieldAll := func(ch <-chan T) {
+		for x := range ch {
+			ret <- x
+		}
+	}
 
-			if cmp(a, b) < 0 {
-				if !yield(a) {
-					return
-				}
-				a, okA = nextA()
+	go func() {
+		defer close(ret)
+
+		nextA, nextB, okA, okB := both(a, b)
+
+		for okA && okB {
+			if cmp(nextA, nextB) < 0 {
+				ret <- nextA
+				nextA, okA = <-a
 			} else {
-				if !yield(b) {
-					return
-				}
-				b, okB = nextB()
+				ret <- nextB
+				nextB, okB = <-b
 			}
 		}
+
+		if okB {
+			ret <- nextB
+			yieldAll(b)
+		}
+		if okA {
+			ret <- nextA
+			yieldAll(a)
+		}
+
+	}()
+	return ret
+}
+
+func both[T any](a, b <-chan T) (T, T, bool, bool) {
+	select {
+	case nextA, okA := <-a:
+		nextB, okB := <-b
+		return nextA, nextB, okA, okB
+	case nextB, okB := <-b:
+		nextA, okA := <-a
+		return nextA, nextB, okA, okB
 	}
 }
