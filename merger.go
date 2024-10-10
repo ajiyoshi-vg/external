@@ -35,6 +35,9 @@ func Merge[T any](a, b <-chan T, cmp func(T, T) int) <-chan T {
 	ret := make(chan T, 100)
 
 	yieldAll := func(ch <-chan T) {
+		if ch == nil {
+			return
+		}
 		for x := range ch {
 			ret <- x
 		}
@@ -42,6 +45,15 @@ func Merge[T any](a, b <-chan T, cmp func(T, T) int) <-chan T {
 
 	go func() {
 		defer close(ret)
+
+		if a == nil {
+			yieldAll(b)
+			return
+		}
+		if b == nil {
+			yieldAll(a)
+			return
+		}
 
 		nextA, nextB, okA, okB := both(a, b)
 

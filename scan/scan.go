@@ -105,6 +105,9 @@ func WithIndex[T any](seq iter.Seq[T]) iter.Seq2[int, T] {
 
 func Chan[T any](ch <-chan T) iter.Seq[T] {
 	return func(yield func(T) bool) {
+		if ch == nil {
+			return
+		}
 		for x := range ch {
 			if !yield(x) {
 				return

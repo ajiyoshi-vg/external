@@ -5,7 +5,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/ajiyoshi-vg/external/emit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,21 +41,21 @@ func TestMerger(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	cases := map[string]struct {
-		a, b   []int
+		a, b   <-chan int
 		expect []int
 	}{
 		"normal": {
-			a:      []int{1, 3, 5},
-			b:      []int{2, 4, 6},
+			a:      produce(1, 3, 5),
+			b:      produce(2, 4, 6),
 			expect: []int{1, 2, 3, 4, 5, 6},
 		},
 		"empty": {
 			a:      nil,
-			b:      []int{1, 2, 3},
+			b:      produce(1, 2, 3),
 			expect: []int{1, 2, 3},
 		},
 		"empty2": {
-			a:      []int{1, 2, 3},
+			a:      produce(1, 2, 3),
 			b:      nil,
 			expect: []int{1, 2, 3},
 		},
@@ -69,11 +68,7 @@ func TestMerge(t *testing.T) {
 
 	for title, c := range cases {
 		t.Run(title, func(t *testing.T) {
-			seq := Merge(
-				emit.Chan(slices.Values(c.a)),
-				emit.Chan(slices.Values(c.b)),
-				Compare[int],
-			)
+			seq := Merge(c.a, c.b, Compare[int])
 			actual := make([]int, 0, len(c.expect))
 			for x := range seq {
 				actual = append(actual, x)
@@ -81,4 +76,15 @@ func TestMerge(t *testing.T) {
 			assert.Equal(t, c.expect, actual)
 		})
 	}
+}
+
+func produce(xs ...int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for _, x := range xs {
+			ch <- x
+		}
+	}()
+	return ch
 }
