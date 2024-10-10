@@ -22,7 +22,11 @@ func ChunkSize(n int) func(*bufferOption) {
 	}
 }
 
-func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOption)) {
+func Buffered[T any](
+	seq iter.Seq[T],
+	yield func(T) bool,
+	opts ...func(*bufferOption),
+) {
 	opt := &bufferOption{
 		chunkSize:  1000,
 		bufferSize: 100,
@@ -30,12 +34,7 @@ func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOp
 	for _, f := range opts {
 		f(opt)
 	}
-	ch := make(chan []T, opt.bufferSize)
-	go func() {
-		defer close(ch)
-		for xs := range scan.Chunk(seq, opt.chunkSize) {
-			ch <- xs
-		}
-	}()
+	chunked := scan.Chunk(seq, opt.chunkSize)
+	ch := NewChan(chunked, opt.bufferSize)
 	Flatten(scan.Chan(ch), yield)
 }

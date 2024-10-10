@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -39,10 +38,9 @@ func run() error {
 }
 
 func sorted(r io.Reader) error {
-	br := bufio.NewReader(r)
 	prev := ""
 	n := 0
-	for line := range scan.Lines(br) {
+	for line := range scan.Lines(r) {
 		if prev > line {
 			return fmt.Errorf("not sorted: [%s] > [%s]", prev, line)
 		}

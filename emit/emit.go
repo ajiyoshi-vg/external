@@ -36,7 +36,11 @@ func Flatten[T any](seq iter.Seq[[]T], yield func(T) bool) {
 }
 
 func Chan[T any](seq iter.Seq[T]) <-chan T {
-	ret := make(chan T)
+	return NewChan(seq, 0)
+}
+
+func NewChan[T any](seq iter.Seq[T], n int) <-chan T {
+	ret := make(chan T, n)
 	go func() {
 		defer close(ret)
 		for x := range seq {
