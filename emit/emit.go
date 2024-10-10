@@ -25,7 +25,7 @@ func Then[T any](seq iter.Seq[T], f func()) iter.Seq[T] {
 	}
 }
 
-func Each[T any](seq iter.Seq[[]T], yield func(T) bool) {
+func Flatten[T any](seq iter.Seq[[]T], yield func(T) bool) {
 	for xs := range seq {
 		for _, x := range xs {
 			if !yield(x) {

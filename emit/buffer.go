@@ -37,5 +37,5 @@ func Buffered[T any](seq iter.Seq[T], yield func(T) bool, opts ...func(*bufferOp
 			ch <- xs
 		}
 	}()
-	Each(Chan(ch), yield)
+	Flatten(Chan(ch), yield)
 }
