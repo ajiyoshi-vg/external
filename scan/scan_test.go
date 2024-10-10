@@ -127,3 +127,33 @@ func TestUniq(t *testing.T) {
 		})
 	}
 }
+
+func TestChan(t *testing.T) {
+	cases := map[string]struct {
+		input  <-chan int
+		expect []int
+	}{
+		"normal": {
+			input:  produce(1, 2, 3),
+			expect: []int{1, 2, 3},
+		},
+	}
+
+	for title, c := range cases {
+		t.Run(title, func(t *testing.T) {
+			actual := slices.Collect(Chan(c.input))
+			assert.Equal(t, c.expect, actual)
+		})
+	}
+}
+
+func produce(xs ...int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for _, x := range xs {
+			ch <- x
+		}
+	}()
+	return ch
+}

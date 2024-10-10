@@ -21,7 +21,7 @@ func (m *Merger[T]) Merge(xs []iter.Seq[T]) iter.Seq[T] {
 
 func (m *Merger[T]) merge(xs []iter.Seq[T]) <-chan T {
 	if len(xs) == 0 {
-		return nil
+		return emit.Chan[T](nop)
 	}
 	if len(xs) == 1 {
 		return emit.Chan(xs[0])
