@@ -32,14 +32,14 @@ func NewSplitter[T any](cmp func(T, T) int, opt ...Option) *Splitter[T] {
 }
 
 func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
-	ch := make(chan *Chunk[T])
-	done := collectSlice(ch)
+	ch := make(chan Chunk[T])
+	result := collectSlice(ch)
 
 	g := errgroup.Group{}
 	g.SetLimit(s.opt.limit)
 	for data := range scan.Chunk(seq, s.opt.chunkSize) {
 		g.Go(func() error {
-			chunk, err := s.chunk(data)
+			chunk, err := s.sortedChunk(data)
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
 	err := g.Wait()
 	close(ch)
 
-	ret := NewChunks(<-done)
+	ret := NewChunks(<-result)
 	if err != nil {
 		return nil, errors.Join(err, ret.Clean())
 	}
@@ -58,19 +58,19 @@ func (s *Splitter[T]) Split(seq iter.Seq[T]) (*Chunks[T], error) {
 }
 
 func collectSlice[T any](ch <-chan T) <-chan []T {
-	done := make(chan []T)
+	result := make(chan []T)
 	go func() {
-		defer close(done)
+		defer close(result)
 		xs := make([]T, 0, 10)
 		for x := range ch {
 			xs = append(xs, x)
 		}
-		done <- xs
+		result <- xs
 	}()
-	return done
+	return result
 }
 
-func (s *Splitter[T]) chunk(data []T) (*Chunk[T], error) {
+func (s *Splitter[T]) sortedChunk(data []T) (*ChunkFile[T], error) {
 	s.sort(data)
 	ret := NewChunk(data)
 	if len(data) == s.opt.chunkSize {
