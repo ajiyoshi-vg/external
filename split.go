@@ -11,13 +11,29 @@ import (
 )
 
 type Splitter[T any] struct {
-	cmp func(T, T) int
-	opt option
+	cmp      func(T, T) int
+	newChunk func([]T) ChunkStore[T]
+	opt      option
+}
+
+type ChunkStore[T any] interface {
+	Store() error
+	Chunk[T]
 }
 
 func NewSplitter[T any](cmp func(T, T) int, opt ...Option) *Splitter[T] {
+	newChunk := func(data []T) ChunkStore[T] { return NewChunkFile(data) }
+	return NewSplitterWithChunkStore(cmp, newChunk, opt...)
+}
+
+func NewSplitterWithChunkStore[T any](
+	cmp func(T, T) int,
+	newChunk func([]T) ChunkStore[T],
+	opt ...Option,
+) *Splitter[T] {
 	ret := &Splitter[T]{
-		cmp: cmp,
+		cmp:      cmp,
+		newChunk: newChunk,
 		opt: option{
 			chunkSize: 1000 * 1000 * 3,
 			limit:     runtime.NumCPU(),
@@ -70,9 +86,9 @@ func collectSlice[T any](ch <-chan T) <-chan []T {
 	return result
 }
 
-func (s *Splitter[T]) sortedChunk(data []T) (*ChunkFile[T], error) {
+func (s *Splitter[T]) sortedChunk(data []T) (Chunk[T], error) {
 	s.sort(data)
-	ret := NewChunk(data)
+	ret := s.newChunk(data)
 	if len(data) == s.opt.chunkSize {
 		if err := ret.Store(); err != nil {
 			return nil, err
