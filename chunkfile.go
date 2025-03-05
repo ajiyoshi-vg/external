@@ -16,7 +16,7 @@ type ChunkFile[T any] struct {
 	length  int
 }
 
-func NewChunk[T any](data []T) *ChunkFile[T] {
+func NewChunkFile[T any](data []T) *ChunkFile[T] {
 	return &ChunkFile[T]{
 		data:   data,
 		length: len(data),
